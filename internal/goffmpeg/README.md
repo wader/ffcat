@@ -1,0 +1,1 @@
+This is a very work in progress ffmpeg CLI wrapper for go
