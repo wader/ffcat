@@ -15,7 +15,7 @@ Make sure you have a reasonably modern ffmpeg in `$PATH`.
 
 ```
 # build and install latest master
-go install github.com/wader/ffcat@latest
+GOPROXY=direct go install github.com/wader/ffcat@master
 # copy binary to $PATH if needed
 cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
 ```
