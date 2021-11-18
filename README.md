@@ -23,6 +23,7 @@ cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
 ## TODO and ideas
 
 - Rename? is not really concatinating
+- Combine wave form and spectragram?
 - Silent/verbose output
 - Pipe input, have to buffer?
 - Timeline grid
