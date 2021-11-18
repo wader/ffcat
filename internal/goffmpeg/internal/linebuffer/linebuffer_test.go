@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"ff/internal/goffmpeg/internal/linebuffer"
+	"github.com/wader/ffcat/internal/goffmpeg/internal/linebuffer"
 )
 
 func Test(t *testing.T) {

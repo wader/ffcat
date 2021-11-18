@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"ff/internal/goffmpeg/features"
+	"github.com/wader/ffcat/internal/goffmpeg/features"
 )
 
 // Printer is something that printfs (used for debug logging)

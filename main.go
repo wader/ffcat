@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"ff/internal/goffmpeg"
-	"ff/internal/iterm2"
 	"flag"
 	"fmt"
 	"image"
@@ -11,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/wader/ffcat/internal/goffmpeg"
+	"github.com/wader/ffcat/internal/iterm2"
 
 	"image/draw"
 	_ "image/png"

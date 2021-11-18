@@ -12,8 +12,8 @@ import (
 	"sync"
 	"testing"
 
-	"ff/internal/goffmpeg"
-	"ff/internal/goffmpeg/cmdgroup"
+	"github.com/wader/ffcat/internal/goffmpeg"
+	"github.com/wader/ffcat/internal/goffmpeg/cmdgroup"
 )
 
 func TestError(t *testing.T) {

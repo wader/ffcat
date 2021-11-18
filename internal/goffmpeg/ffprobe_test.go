@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"ff/internal/goffmpeg"
+	"github.com/wader/ffcat/internal/goffmpeg"
 )
 
 func TestProbe(t *testing.T) {

@@ -1,4 +1,4 @@
-module ff
+module github.com/wader/ffcat
 
 go 1.17
 

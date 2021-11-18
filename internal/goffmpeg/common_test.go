@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"ff/internal/goffmpeg"
+	"github.com/wader/ffcat/internal/goffmpeg"
 
 	"github.com/fortytw2/leaktest"
 	"github.com/wader/osleaktest"

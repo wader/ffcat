@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"ff/internal/goffmpeg/internal/execextra"
-	"ff/internal/goffmpeg/internal/kvargs"
-	"ff/internal/goffmpeg/internal/linebuffer"
+	"github.com/wader/ffcat/internal/goffmpeg/internal/execextra"
+	"github.com/wader/ffcat/internal/goffmpeg/internal/kvargs"
+	"github.com/wader/ffcat/internal/goffmpeg/internal/linebuffer"
 )
 
 // FFprobePath to ffprobe binary. Will be used as name to cmd.Command.
