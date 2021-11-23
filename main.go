@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -59,6 +58,14 @@ func (c *cut) Set(s string) error {
 	}
 
 	return nil
+}
+
+func isImageCodec(s string) bool {
+	switch s {
+	case "png", "jpeg":
+		return true
+	}
+	return false
 }
 
 func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution, c cut) ([]image.Image, error) {
@@ -164,59 +171,83 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 			})
 			outs = append(outs, o)
 		} else if s.CodecType == "video" {
-			splitOuts := []string{o}
-			if s.Index == uint(subtitleStreamIndex) {
-				for i := 0; i < subtitleStreamCount; i++ {
-					splitOuts = append(splitOuts, fmt.Sprintf("subtitle_video%d", i))
+			if isImageCodec(s.CodecName) {
+				height := int(float32(s.Height) / (float32(s.Width) / float32(actualWidth)))
+				height += height % 2
+
+				fg = append(fg, goffmpeg.FilterChain{
+					{
+						Name: "scale",
+						Options: map[string]string{
+							"width": fmt.Sprintf("%d:%d", actualWidth, height),
+						},
+					},
+					{
+						Name: "colorspace",
+						Options: map[string]string{
+							"iall": "bt709",
+							"all":  "bt709",
+							"trc":  "srgb",
+						},
+						Outputs: []string{o},
+					},
+				})
+				outs = append(outs, o)
+			} else {
+				splitOuts := []string{o}
+				if s.Index == uint(subtitleStreamIndex) {
+					for i := 0; i < subtitleStreamCount; i++ {
+						splitOuts = append(splitOuts, fmt.Sprintf("subtitle_video%d", i))
+					}
 				}
+
+				fg = append(fg, goffmpeg.FilterChain{
+					{
+						Name:   "select",
+						Inputs: []string{fmt.Sprintf("0:%d", s.Index)},
+						Options: map[string]string{
+							"expr": vSelectExpr,
+						},
+					},
+					{
+						Name: "scale",
+						Options: map[string]string{
+							"width": fmt.Sprintf("%d:%d", tileWidth, tileHeight),
+						},
+					},
+					{
+						Name: "tile",
+						Options: map[string]string{
+							"layout":    fmt.Sprintf("%dx%d", frames, 1),
+							"nb_frames": fmt.Sprintf("%d", frames),
+						},
+					},
+					{
+						Name: "pad",
+						Options: map[string]string{
+							"width":  "iw+mod(iw,2)",
+							"height": "ih+mod(ih,2)",
+						},
+					},
+					{
+						Name: "colorspace",
+						Options: map[string]string{
+							"iall": "bt709",
+							"all":  "bt709",
+							"trc":  "srgb",
+						},
+					},
+					{
+						Name: "split",
+						Options: map[string]string{
+							"outputs": fmt.Sprintf("%d", len(splitOuts)),
+						},
+						Outputs: splitOuts,
+					},
+				})
+				outs = append(outs, o)
 			}
 
-			fg = append(fg, goffmpeg.FilterChain{
-				{
-					Name:   "select",
-					Inputs: []string{fmt.Sprintf("0:%d", s.Index)},
-					Options: map[string]string{
-						"expr": vSelectExpr,
-					},
-				},
-				{
-					Name: "scale",
-					Options: map[string]string{
-						"width": fmt.Sprintf("%d:%d", tileWidth, tileHeight),
-					},
-				},
-				{
-					Name: "tile",
-					Options: map[string]string{
-						"layout":    fmt.Sprintf("%dx%d", frames, 1),
-						"nb_frames": fmt.Sprintf("%d", frames),
-					},
-				},
-				{
-					Name: "pad",
-					Options: map[string]string{
-						"width":  "iw+mod(iw,2)",
-						"height": "ih+mod(ih,2)",
-					},
-				},
-				{
-					Name: "colorspace",
-					Options: map[string]string{
-						"iall": "bt709",
-						"all":  "bt709",
-						"trc":  "srgb",
-					},
-				},
-				{
-					Name: "split",
-					Options: map[string]string{
-						"outputs": fmt.Sprintf("%d", len(splitOuts)),
-					},
-					Outputs: splitOuts,
-				},
-			})
-
-			outs = append(outs, o)
 		} else if s.CodecType == "subtitle" {
 			sbo := fmt.Sprintf("subtitle_main%d", subtitleOutCount)
 			fg = append(fg, goffmpeg.FilterChain{
@@ -316,7 +347,12 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 		if s.CodecType == "audio" {
 			height = audioChannelHeight * int(s.Channels)
 		} else if s.CodecType == "video" {
-			height = tileHeight
+			if isImageCodec(s.CodecName) {
+				height = int(float32(s.Height) / (float32(s.Width) / float32(actualWidth)))
+				height += height % 2
+			} else {
+				height = tileHeight
+			}
 		} else if s.CodecType == "subtitle" {
 			height = tileHeight
 		}
@@ -434,7 +470,7 @@ func main() {
 		if len(files) == 0 {
 			f, err := os.CreateTemp("", "ffcat")
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer os.Remove(f.Name())
 			if _, err := io.Copy(f, os.Stdin); err != nil {
