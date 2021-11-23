@@ -333,7 +333,7 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 	return ms, nil
 }
 
-var cutFlag = cut{
+var rangeFlag = cut{
 	offset:   0,
 	duration: 5,
 	delta:    1,
@@ -341,6 +341,7 @@ var cutFlag = cut{
 
 var debugFlag = flag.Bool("d", false, "Debug")
 var verboseFlag = flag.Bool("v", false, "Verbose")
+var clearFlag = flag.Bool("c", false, "Clear")
 
 func verbosef(s string, args ...interface{}) {
 	if *verboseFlag {
@@ -355,7 +356,7 @@ func debugf(s string, args ...interface{}) {
 }
 
 func init() {
-	flag.Var(&cutFlag, "c", "Cut [[hh:]mm:]ss[,delta[,duration]]")
+	flag.Var(&rangeFlag, "r", "Range [[hh:]mm:]ss[,delta[,duration]]")
 }
 
 func previewFile(r iterm2.Resolution, path string) error {
@@ -365,7 +366,7 @@ func previewFile(r iterm2.Resolution, path string) error {
 		return nil
 	}
 
-	cf := cutFlag
+	cf := rangeFlag
 	if cf.offset < 0 {
 		cf.offset = fp.ProbeResult.Duration().Seconds() + cf.offset
 	}
@@ -416,6 +417,12 @@ func main() {
 	if err := func() error {
 		if !iterm2.IsCompatible() {
 			fmt.Fprintln(os.Stdin, "not iterm2 terminal")
+		}
+
+		if *clearFlag {
+			if err := iterm2.ClearScrollback(os.Stderr); err != nil {
+				return err
+			}
 		}
 
 		r, err := iterm2.PixelResolution(os.Stderr)

@@ -12,6 +12,8 @@ import (
 	"golang.org/x/term"
 )
 
+// TODO: make struct with fd
+
 // TODO: query somehow
 func IsCompatible() bool {
 	return os.Getenv("TERM_PROGRAM") == "iTerm.app"
@@ -100,4 +102,11 @@ func PixelResolution(f *os.File) (Resolution, error) {
 		WidthAlign:  int(sz.Width * sz.Scale),
 		HeightAlign: int(sz.Height * sz.Scale),
 	}, nil
+}
+
+func ClearScrollback(w io.Writer) error {
+	if _, err := w.Write([]byte("\x1b]1337;ClearScrollback\x07")); err != nil {
+		return err
+	}
+	return nil
 }
