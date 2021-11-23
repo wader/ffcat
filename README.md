@@ -22,6 +22,8 @@ cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
 
 ## TODO and ideas
 
+- Ok to use stderr to talk to iterm2? seem to work, makes it possible to pipe
+- iterm2 clean buffer argument?
 - Rename? is not really concatinating
 - Combine wave form and spectragram?
 - Silent/verbose output

@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -356,68 +358,88 @@ func init() {
 	flag.Var(&cutFlag, "c", "Cut [[hh:]mm:]ss[,delta[,duration]]")
 }
 
+func previewFile(r iterm2.Resolution, path string) error {
+	fp := goffmpeg.FFProbeCmd{Input: goffmpeg.Input{File: path}}
+	if err := fp.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", path, err)
+		return nil
+	}
+
+	cf := cutFlag
+	if cf.offset < 0 {
+		cf.offset = fp.ProbeResult.Duration().Seconds() + cf.offset
+	}
+
+	ms, err := streamPreviews(path, fp.ProbeResult, r, cf)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", path, err)
+		return nil
+	}
+
+	pr := fp.ProbeResult
+
+	// Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/wader/Downloads/video.mp4':
+	if *verboseFlag {
+		verbosef("%s: %s: %ds\n", pr.FormatName(), path, pr.Duration()/time.Second)
+	}
+
+	for i, m := range ms {
+		s := fp.ProbeResult.Streams[i]
+
+		verbosef("%d: %s %s %sb/s ", s.Index, s.CodecName, s.CodecType, s.BitRate)
+
+		if s.CodecType == "audio" {
+			// Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 72 kb/s (default)
+			verbosef("%s Hz %d ch %d bit", s.SampleRate, s.Channels, s.BitsPerSample)
+		} else if s.CodecType == "video" {
+			// Stream #0:0(und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, bt709), 320x240 [SAR 1:1 DAR 4:3], 80 kb/s, 25 fps, 25 tbr, 12800 tbn, 50 tbc (default)
+			verbosef("%dx%d", s.Width, s.Height)
+		} else if s.CodecType == "subtitle" {
+			verbosef("%s", s.Tags["language"])
+		}
+
+		verbosef("\n")
+
+		if err := iterm2.Image(os.Stdout, m); err != nil {
+			return err
+		}
+
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func main() {
 	flag.Parse()
 
 	if err := func() error {
 		if !iterm2.IsCompatible() {
-			fmt.Fprintln(os.Stdout, "not iterm2 terminal")
+			fmt.Fprintln(os.Stdin, "not iterm2 terminal")
 		}
 
-		r, err := iterm2.PixelResolution(os.Stdin)
+		r, err := iterm2.PixelResolution(os.Stderr)
 		if err != nil {
 			return err
 		}
 
-		for _, a := range flag.Args() {
-			path := a
-
-			fp := goffmpeg.FFProbeCmd{Input: goffmpeg.Input{File: path}}
-			if err := fp.Run(); err != nil {
-				fmt.Fprintf(os.Stderr, "%s: %s\n", a, err)
-				continue
-			}
-
-			cf := cutFlag
-			if cf.offset < 0 {
-				cf.offset = fp.ProbeResult.Duration().Seconds() + cf.offset
-			}
-
-			ms, err := streamPreviews(path, fp.ProbeResult, r, cf)
+		files := flag.Args()
+		if len(files) == 0 {
+			f, err := os.CreateTemp("", "ffcat")
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%s: %s\n", a, err)
-				continue
+				log.Fatal(err)
 			}
-
-			r := fp.ProbeResult
-
-			// Input #0, mov,mp4,m4a,3gp,3g2,mj2, from '/Users/wader/Downloads/video.mp4':
-			if *verboseFlag {
-				verbosef("%s: %s: %ds\n", r.FormatName(), a, r.Duration()/time.Second)
+			defer os.Remove(f.Name())
+			if _, err := io.Copy(f, os.Stdin); err != nil {
+				return err
 			}
+			f.Close()
+			files = append(files, f.Name())
+		}
 
-			for i, m := range ms {
-				s := fp.ProbeResult.Streams[i]
-
-				verbosef("%d: %s %s %sb/s ", s.Index, s.CodecName, s.CodecType, s.BitRate)
-
-				if s.CodecType == "audio" {
-					// Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 72 kb/s (default)
-					verbosef("%s Hz %d ch %d bit", s.SampleRate, s.Channels, s.BitsPerSample)
-				} else if s.CodecType == "video" {
-					// Stream #0:0(und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, bt709), 320x240 [SAR 1:1 DAR 4:3], 80 kb/s, 25 fps, 25 tbr, 12800 tbn, 50 tbc (default)
-					verbosef("%dx%d", s.Width, s.Height)
-				} else if s.CodecType == "subtitle" {
-					verbosef("%s", s.Tags["language"])
-				}
-
-				verbosef("\n")
-
-				if err := iterm2.Image(os.Stdout, m); err != nil {
-					return err
-				}
-
-				fmt.Println()
+		for _, a := range files {
+			if err := previewFile(r, a); err != nil {
+				return err
 			}
 		}
 		return nil
