@@ -395,7 +395,7 @@ func init() {
 	flag.Var(&rangeFlag, "r", "Range [[hh:]mm:]ss[,delta[,duration]]")
 }
 
-func previewFile(r iterm2.Resolution, path string) error {
+func previewFile(r iterm2.Resolution, path string, clear bool) error {
 	fp := goffmpeg.FFProbeCmd{Input: goffmpeg.Input{File: path}}
 	if err := fp.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %s\n", path, err)
@@ -422,6 +422,12 @@ func previewFile(r iterm2.Resolution, path string) error {
 
 	for i, m := range ms {
 		s := fp.ProbeResult.Streams[i]
+
+		if clear {
+			if err := iterm2.ClearScrollback(os.Stderr); err != nil {
+				return err
+			}
+		}
 
 		verbosef("%d: %s %s %sb/s ", s.Index, s.CodecName, s.CodecType, s.BitRate)
 
@@ -450,15 +456,11 @@ func previewFile(r iterm2.Resolution, path string) error {
 func main() {
 	flag.Parse()
 
+	shouldClear := *clearFlag
+
 	if err := func() error {
 		if !iterm2.IsCompatible() {
 			fmt.Fprintln(os.Stdin, "not iterm2 terminal")
-		}
-
-		if *clearFlag {
-			if err := iterm2.ClearScrollback(os.Stderr); err != nil {
-				return err
-			}
 		}
 
 		r, err := iterm2.PixelResolution(os.Stderr)
@@ -481,9 +483,10 @@ func main() {
 		}
 
 		for _, a := range files {
-			if err := previewFile(r, a); err != nil {
+			if err := previewFile(r, a, shouldClear); err != nil {
 				return err
 			}
+			shouldClear = false
 		}
 		return nil
 	}(); err != nil {
