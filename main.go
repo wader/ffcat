@@ -105,7 +105,7 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 	tileHeight -= tileHeight % r.HeightAlign
 	audioChannelHeight -= audioChannelHeight % r.HeightAlign
 
-	actualWidth := tileWidth * frames
+	charAlignedWidth := tileWidth * frames
 
 	var fg goffmpeg.FilterGraph
 	var outs []string
@@ -145,7 +145,7 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 				{
 					Name: "showwavespic",
 					Options: map[string]string{
-						"size":           fmt.Sprintf("%dx%d", actualWidth, audioChannelHeight*int(s.Channels)),
+						"size":           fmt.Sprintf("%dx%d", charAlignedWidth, audioChannelHeight*int(s.Channels)),
 						"split_channels": "1",
 						"colors":         "white",
 					},
@@ -172,14 +172,19 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 			outs = append(outs, o)
 		} else if s.CodecType == "video" {
 			if isImageCodec(s.CodecName) {
-				height := int(float32(s.Height) / (float32(s.Width) / float32(actualWidth)))
-				height += height % 2
+				width := int(s.Width)
+				height := int(s.Height)
+				if width > charAlignedWidth {
+					width = charAlignedWidth
+					height = int(float32(s.Height) / (float32(s.Width) / float32(charAlignedWidth)))
+					height += height % 2
+				}
 
 				fg = append(fg, goffmpeg.FilterChain{
 					{
 						Name: "scale",
 						Options: map[string]string{
-							"width": fmt.Sprintf("%d:%d", actualWidth, height),
+							"width": fmt.Sprintf("%d:%d", width, height),
 						},
 					},
 					{
@@ -348,8 +353,13 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 			height = audioChannelHeight * int(s.Channels)
 		} else if s.CodecType == "video" {
 			if isImageCodec(s.CodecName) {
-				height = int(float32(s.Height) / (float32(s.Width) / float32(actualWidth)))
-				height += height % 2
+				width := int(s.Width)
+				height = int(s.Height)
+				if width > charAlignedWidth {
+					height = int(float32(s.Height) / (float32(s.Width) / float32(charAlignedWidth)))
+					height += height % 2
+				}
+
 			} else {
 				height = tileHeight
 			}
@@ -358,7 +368,7 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 		}
 
 		if height != 0 {
-			r := image.Rectangle{Max: image.Point{X: actualWidth, Y: height}}
+			r := image.Rectangle{Max: image.Point{X: charAlignedWidth, Y: height}}
 			ci := image.NewNRGBA(r)
 			draw.Draw(ci, r, m, image.Point{X: 0, Y: dy}, draw.Over)
 			ms = append(ms, ci)
