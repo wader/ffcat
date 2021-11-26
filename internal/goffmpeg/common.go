@@ -63,6 +63,7 @@ type Metadata struct {
 	Title           string `json:"title"`            // name of the work.
 	Track           string `json:"track"`            // number of this work in the set, can be in form current/total.
 	VariantBitrate  string `json:"variant_bitrate"`  // the total bitrate of the bitrate variant that the current stream is part of
+	Rotation        int    `json:"rotation"`         // clockwise rotation (TODO: deprecated? use side_data instead?)
 }
 
 // ToMap convert to a key value string map

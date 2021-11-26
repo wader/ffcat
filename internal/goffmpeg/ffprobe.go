@@ -24,45 +24,83 @@ type FFProbeResult struct {
 	Raw     map[string]interface{} `json:"raw"`
 }
 
+const (
+	SideDataDisplayMatrix = "Display Matrix"
+)
+
+// TODO: is a union of all types at the moment
+// if value if not mapped use FFProbeResult.Raw
+type SideData struct {
+	SideDataType  string `json:"side_data_type"`
+	DisplayMatrix string `json:"displaymatrix"`
+	Rotation      int    `json:"rotation"` // counter clockwise rotation
+}
+
 // FFProbeStream ffprobe stream result
 type FFProbeStream struct {
-	Index              uint              `json:"index"`
-	CodecName          string            `json:"codec_name"`
-	CodecLongName      string            `json:"codec_long_name"`
-	CodecType          string            `json:"codec_type"`
-	CodecTimeBase      string            `json:"codec_time_base"`
-	CodecTagString     string            `json:"codec_tag_string"`
-	CodecTag           string            `json:"codec_tag"`
-	SampleFmt          string            `json:"sample_fmt"`
-	SampleRate         string            `json:"sample_rate"`
-	Channels           uint              `json:"channels"`
-	ChannelLayout      string            `json:"channel_layout"`
-	BitsPerSample      uint              `json:"bits_per_sample"`
-	RFrameRate         string            `json:"r_frame_rate"`
-	AvgFrameRate       string            `json:"avg_frame_rate"`
-	TimeBase           string            `json:"time_base"`
-	StartPts           int64             `json:"start_pts"`
-	StartTime          string            `json:"start_time"`
-	DurationTs         uint64            `json:"duration_ts"`
-	Duration           string            `json:"duration"`
-	BitRate            string            `json:"bit_rate"`
-	MaxBitRate         string            `json:"max_bit_rate"`
-	Profile            string            `json:"profile"`
-	NbFrames           string            `json:"nb_frames"`
-	Width              uint              `json:"width"`
-	Height             uint              `json:"height"`
-	CodedWidth         uint              `json:"coded_width"`
-	CodedHeight        uint              `json:"codec_height"`
-	HasBFrames         uint              `json:"has_b_frames"`
-	SampleAspectRatio  string            `json:"sample_aspect_ratio"`
-	DisplayAspectRatio string            `json:"display_aspect_ratio"`
-	PixFmt             string            `json:"pix_fmt"`
-	Level              int               `json:"level"`
-	ChromaLocation     string            `json:"chroma_location"`
-	Refs               uint              `json:"refs"`
-	IsAvc              string            `json:"is_avc"`
-	NalLengthSize      string            `json:"nal_length_size"`
-	Tags               map[string]string `json:"tags"`
+	Index              uint       `json:"index"`
+	CodecName          string     `json:"codec_name"`
+	CodecLongName      string     `json:"codec_long_name"`
+	CodecType          string     `json:"codec_type"`
+	CodecTimeBase      string     `json:"codec_time_base"`
+	CodecTagString     string     `json:"codec_tag_string"`
+	CodecTag           string     `json:"codec_tag"`
+	SampleFmt          string     `json:"sample_fmt"`
+	SampleRate         string     `json:"sample_rate"`
+	Channels           uint       `json:"channels"`
+	ChannelLayout      string     `json:"channel_layout"`
+	BitsPerSample      uint       `json:"bits_per_sample"`
+	RFrameRate         string     `json:"r_frame_rate"`
+	AvgFrameRate       string     `json:"avg_frame_rate"`
+	TimeBase           string     `json:"time_base"`
+	StartPts           int64      `json:"start_pts"`
+	StartTime          string     `json:"start_time"`
+	DurationTs         uint64     `json:"duration_ts"`
+	Duration           string     `json:"duration"`
+	BitRate            string     `json:"bit_rate"`
+	MaxBitRate         string     `json:"max_bit_rate"`
+	Profile            string     `json:"profile"`
+	NbFrames           string     `json:"nb_frames"`
+	Width              uint       `json:"width"`
+	Height             uint       `json:"height"`
+	CodedWidth         uint       `json:"coded_width"`
+	CodedHeight        uint       `json:"codec_height"`
+	HasBFrames         uint       `json:"has_b_frames"`
+	SampleAspectRatio  string     `json:"sample_aspect_ratio"`
+	DisplayAspectRatio string     `json:"display_aspect_ratio"`
+	PixFmt             string     `json:"pix_fmt"`
+	Level              int        `json:"level"`
+	ChromaLocation     string     `json:"chroma_location"`
+	Refs               uint       `json:"refs"`
+	IsAvc              string     `json:"is_avc"`
+	NalLengthSize      string     `json:"nal_length_size"`
+	Tags               Metadata   `json:"tags"`
+	SideDataList       []SideData `json:"side_data_list"`
+}
+
+func (fps FFProbeStream) Rotation() int {
+	for _, s := range fps.SideDataList {
+		if s.SideDataType == SideDataDisplayMatrix {
+			return s.Rotation
+		}
+	}
+	return 0
+}
+
+func (fps FFProbeStream) DisplayWidth() uint {
+	switch fps.Rotation() {
+	case -90, 90:
+		return fps.Height
+	}
+	return fps.Width
+}
+
+func (fps FFProbeStream) DisplayHeight() uint {
+	switch fps.Rotation() {
+	case -90, 90:
+		return fps.Width
+	}
+	return fps.Height
 }
 
 // FFProbeFormat ffprobe format result
