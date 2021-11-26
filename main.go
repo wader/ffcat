@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -176,13 +175,12 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 		} else if s.CodecType == "video" {
 			if isImageCodec(s.CodecName) {
 				width := int(s.DisplayWidth())
-				height := int(s.DisplayWidth())
+				height := int(s.DisplayHeight())
 				if width > charAlignedWidth {
 					width = charAlignedWidth
-					height = int(float32(s.Height) / (float32(width) / float32(charAlignedWidth)))
+					height = int(float32(height) / (float32(width) / float32(charAlignedWidth)))
 					height += height % 2
 				}
-
 				fg = append(fg, goffmpeg.FilterChain{
 					{
 						Name: "scale",
@@ -359,7 +357,7 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 				width := int(s.DisplayWidth())
 				height = int(s.DisplayHeight())
 				if width > charAlignedWidth {
-					height = int(float32(s.Height) / (float32(width) / float32(charAlignedWidth)))
+					height = int(float32(height) / (float32(width) / float32(charAlignedWidth)))
 					height += height % 2
 				}
 
@@ -433,8 +431,6 @@ func previewFile(r iterm2.Resolution, path string, clear bool) error {
 		verbosef("%s: %s: %ds\n", pr.FormatName(), path, pr.Duration()/time.Second)
 	}
 
-	log.Printf("fp.ProbeResult.Raw: %#+v\n", fp.ProbeResult.Raw)
-
 	for i, m := range ms {
 		s := fp.ProbeResult.Streams[i]
 
@@ -452,7 +448,7 @@ func previewFile(r iterm2.Resolution, path string, clear bool) error {
 			verbosef("%s Hz %d ch %d bit", s.SampleRate, s.Channels, s.BitsPerSample)
 		} else if s.CodecType == "video" {
 			// Stream #0:0(und): Video: h264 (Constrained Baseline) (avc1 / 0x31637661), yuv420p(tv, bt709), 320x240 [SAR 1:1 DAR 4:3], 80 kb/s, 25 fps, 25 tbr, 12800 tbn, 50 tbc (default)
-			verbosef("%dx%d (%d)", s.Width, s.Height, s.Rotation())
+			verbosef("%dx%d (%d)", s.DisplayWidth(), s.DisplayHeight(), s.Rotation())
 		} else if s.CodecType == "subtitle" {
 			verbosef("%s", s.Tags.Language)
 		}
