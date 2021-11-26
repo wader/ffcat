@@ -90,11 +90,11 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 	for _, s := range pr.Streams {
 		w := s.DisplayWidth()
 		h := s.DisplayHeight()
-		if h > maxStreamHeight {
-			maxStreamHeight = h
-		}
 		if w > maxStreamWidth {
 			maxStreamWidth = w
+		}
+		if h > maxStreamHeight {
+			maxStreamHeight = h
 		}
 	}
 	if maxStreamHeight != 0 && maxStreamWidth != 0 {
@@ -177,9 +177,9 @@ func streamPreviews(path string, pr goffmpeg.FFProbeResult, r iterm2.Resolution,
 				width := int(s.DisplayWidth())
 				height := int(s.DisplayHeight())
 				if width > charAlignedWidth {
-					width = charAlignedWidth
 					height = int(float32(height) / (float32(width) / float32(charAlignedWidth)))
 					height += height % 2
+					width = charAlignedWidth
 				}
 				fg = append(fg, goffmpeg.FilterChain{
 					{
