@@ -13,11 +13,11 @@ type Render struct{}
 
 func (Render) CanHandle(bs []byte) bool {
 	// TODO: improve
-	return strings.Contains(strings.ToLower(string(bs)), "digraph {")
+	return strings.Contains(strings.ToLower(string(bs)), "digraph")
 }
 
 func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (render.Output, error) {
-	c := exec.Command("dot", "-Tpng", path)
+	c := exec.Command("dot", "-Gbgcolor=black", "-Gfontcolor=white", "-Ncolor=white", "-Nfontcolor=white", "-Ecolor=white", "-Efontcolor=white", "-Tpng", path)
 	bs, err := c.Output()
 	if err != nil {
 		return Output{}, err
