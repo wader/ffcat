@@ -14,6 +14,7 @@ Output file preview directly in terminal. Currently can only output via iTerm2 c
 
 
 ![ffcat demo](doc/demo.png)
+![ffcat demo](doc/demo2.png)
 
 ## Requirements
 
