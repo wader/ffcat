@@ -134,13 +134,12 @@ func previewFile(termRes iterm2.Resolution, path string, clear bool) error {
 			clear = false
 		}
 
-		verbosef("%s\n", im)
-
 		if err := iterm2.Image(os.Stdout, im.Image()); err != nil {
 			return err
 		}
-
 		fmt.Println()
+
+		verbosef("%s\n", im)
 	}
 
 	return nil

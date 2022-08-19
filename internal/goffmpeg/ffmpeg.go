@@ -33,15 +33,16 @@ var FFmpegPath = "ffmpeg"
 
 // FFmpegCmd is a ffmpeg command
 // ffmpeg
-//   Input
-//     -i io.Reader/string
-//   ...
-//   Output
-//     Map
-//       -map *Input/Specifier
-//     ...
-//     io.WriteCloser/string
-//   ...
+//
+//	Input
+//	  -i io.Reader/string
+//	...
+//	Output
+//	  Map
+//	    -map *Input/Specifier
+//	  ...
+//	  io.WriteCloser/string
+//	...
 type FFmpegCmd struct {
 	Flags       []string     `json:"flags"`
 	Inputs      []*Input     `json:"inputs"`
@@ -215,7 +216,7 @@ func ParseProgress(p *Progress, line string) bool {
 	return name == "progress"
 }
 
-var filterGraphValueEscapeRe = regexp.MustCompile(`[,:]`)
+var filterGraphValueEscapeRe = regexp.MustCompile(`[ ,:]`)
 
 func (fm *FFmpegCmd) buildArgs(inputReaderFn inputReaderFn, outputWriterFn outputWriterFn) ([]string, error) {
 	inputToIndex := map[interface{}]int{}

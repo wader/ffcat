@@ -1,7 +1,14 @@
 # ffcat
 
-Output per stream preview directly in terminal. Supports image, audio and video files.
-Currently can only output via iTerm2 control codes.
+Output file preview directly in terminal. Currently can only output via iTerm2 control codes.
+
+## Supports
+
+- Video by showing frames
+- Audio by showing wave form
+- Images
+- SVG
+- Graphviz
 
 **Be aware this is a quick proof of concept hack**
 
@@ -18,6 +25,14 @@ Make sure you have a reasonably modern ffmpeg in `$PATH`.
 GOPROXY=direct go install github.com/wader/ffcat@master
 # copy binary to $PATH if needed
 cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
+```
+
+## Tricks
+
+plot a line using gnuplot
+```
+# format is whitespace separated x y values
+echo -e "1 3\n2 4\ne\n" | gnuplot -e "set terminal png; plot '-' using 1:2 w l" | ffcat
 ```
 
 ## TODO and ideas

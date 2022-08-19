@@ -32,9 +32,8 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 		return nil, err
 	}
 
-	cf := rRange
-	if cf.Offset < 0 {
-		cf.Offset = fp.ProbeResult.Duration().Seconds() + cf.Offset
+	if rRange.Offset < 0 {
+		rRange.Offset = fp.ProbeResult.Duration().Seconds() + rRange.Offset
 	}
 
 	pr := fp.ProbeResult
@@ -192,6 +191,18 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 						},
 					},
 					{
+						Name: "drawtext",
+						Options: map[string]string{
+							"text":      fmt.Sprintf("%%{pts\\:hms\\:%f}", rRange.Offset),
+							"x":         "0",
+							"y":         "h-text_h",
+							"fontcolor": "white",
+							"shadowy":   "1",
+							"box":       "1",
+							"boxcolor":  "black@0.5",
+						},
+					},
+					{
 						Name: "tile",
 						Options: map[string]string{
 							"layout":    fmt.Sprintf("%dx%d", frames, 1),
@@ -303,7 +314,7 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 	// 	f.Stderr = os.Stderr
 	// }
 
-	// debugf("%s\n", strings.Join(f.Args(), " "))
+	// log.Printf("var: %s\n", strings.Join(f.Args(), " "))
 
 	err := f.Run()
 	if err != nil {
