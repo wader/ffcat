@@ -2,6 +2,8 @@
 
 Output file preview directly in terminal. Currently can only output via iTerm2 control codes.
 
+**WARNING: This is a quick proof of concept hack**
+
 ## Supports
 
 - Video by showing frames
@@ -10,13 +12,12 @@ Output file preview directly in terminal. Currently can only output via iTerm2 c
 - SVG
 - Graphviz
 
-**Be aware this is a quick proof of concept hack**
 
 ![ffcat demo](doc/demo.png)
 
 ## Requirements
 
-Make sure you have a reasonably modern ffmpeg in `$PATH`.
+Make sure you have a reasonably modern ffmpeg, inkscape, rsvg and graphviz in `$PATH`.
 
 ## Install
 
