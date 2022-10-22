@@ -38,16 +38,88 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 
 	pr := fp.ProbeResult
 
-	bb := &bytes.Buffer{}
+	if len(pr.Streams) == 1 && (pr.Format.FormatName == "image2" || pr.Duration() <= time.Microsecond*time.Duration(40)) {
+		// is an image case
+
+		s := pr.Streams[0]
+
+		i := &goffmpeg.Input{
+			File: path,
+		}
+
+		width := rRes.Width
+		if width > int(s.Width) {
+			width = int(s.Width)
+		}
+
+		fg := goffmpeg.FilterGraph(
+			[]goffmpeg.FilterChain{
+				{
+					{
+						Inputs: []string{"0:0"},
+						Name:   "scale",
+						Options: map[string]string{
+							"width": fmt.Sprintf("%d:%d", width, -1),
+						},
+						Outputs: []string{"out"},
+					},
+				},
+			})
+
+		bb := &bytes.Buffer{}
+
+		f := goffmpeg.FFmpegCmd{
+			// DebugLog:    log.New(os.Stderr, "debug>", 0),
+			// Stderr:      os.Stderr,
+			Inputs:      []*goffmpeg.Input{i},
+			FilterGraph: &fg,
+			Outputs: []*goffmpeg.Output{
+				{
+					Maps: []*goffmpeg.Map{
+						{
+							Specifier: "[out]",
+							Codec:     "png",
+						},
+					},
+					Flags: []string{
+						"-frames", "1",
+					},
+					Format: "image2",
+					File:   bb,
+				},
+			},
+			Flags: []string{
+				// "-v", "debug",
+				// "-copyts",
+			},
+		}
+
+		err := f.Run()
+		if err != nil {
+			return nil, err
+		}
+
+		m, _, err := image.Decode(bb)
+		if err != nil {
+			return nil, err
+		}
+
+		return Output{
+			pr: pr,
+			is: []render.Image{
+				Image{s: s, i: m},
+			},
+		}, nil
+	}
 
 	frames := int(rRange.Duration / rRange.Delta)
 
 	i := &goffmpeg.Input{
+		File: path,
 		Flags: []string{
 			"-ss", fmt.Sprintf("%f", rRange.Offset),
 			"-t", fmt.Sprintf("%f", rRange.Duration),
 		},
-		File: path,
 	}
 
 	maxStreamHeight := uint(0)
@@ -284,6 +356,8 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 		})
 	}
 
+	bb := &bytes.Buffer{}
+
 	f := goffmpeg.FFmpegCmd{
 		// DebugLog: log.New(os.Stderr, "debug>", 0),
 		// Stderr:      os.Stderr,
@@ -311,7 +385,7 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 	}
 
 	// if *debugFlag {
-	// 	f.Stderr = os.Stderr
+	// f.Stderr = os.Stderr
 	// }
 
 	// log.Printf("var: %s\n", strings.Join(f.Args(), " "))
