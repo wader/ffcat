@@ -31,10 +31,23 @@ cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
 
 ## Tricks
 
-plot a line using gnuplot
+### Use with watchexec etc
+```
+watchexec -- "... | ffcat -c"
+```
+
+`-c` makes iTerm2 clear the buffer to not run out of memory, same as `echo -e '\x1b]1337;ClearScrollback\x07'`.
+
+### Plot using gnuplot
 ```
 # format is whitespace separated x y values
 echo -e "1 3\n2 4\ne\n" | gnuplot -e "set terminal png; plot '-' using 1:2 w l" | ffcat
+```
+
+### Show PDF page
+
+```
+pdftocairo -f 1 file.pdf -png -singlefile - | ffcat
 ```
 
 ## TODO and ideas
