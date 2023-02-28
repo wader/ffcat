@@ -50,6 +50,12 @@ echo -e "1 3\n2 4\ne\n" | gnuplot -e "set terminal png; plot '-' using 1:2 w l" 
 pdftocairo -f 1 file.pdf -png -singlefile - | ffcat
 ```
 
+### Show go mod depedency graph
+
+```
+go mod graph | (echo 'digraph {'; sed 's/\(.*\) \(.*\)/"\1" -> "\2"/'; echo '}') | ffcat
+```
+
 ## TODO and ideas
 
 - Ok to use stderr to talk to iterm2? seem to work, makes it possible to pipe
