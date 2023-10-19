@@ -24,7 +24,7 @@ Make sure you have a reasonably modern ffmpeg, inkscape, rsvg and graphviz in `$
 
 ```
 # build and install latest master
-GOPROXY=direct go install github.com/wader/ffcat@master
+go install github.com/wader/ffcat@master
 # copy binary to $PATH if needed
 cp "$(go env GOPATH)/bin/ffcat" /usr/local/bin
 ```
