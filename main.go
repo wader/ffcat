@@ -176,13 +176,13 @@ func main() {
 
 		for _, a := range files {
 			if err := previewFile(r, a, shouldClear); err != nil {
-				return err
+				fmt.Fprintln(os.Stderr, err)
 			}
 			shouldClear = false
 		}
 		return nil
 	}(); err != nil {
-		fmt.Fprintln(os.Stdout, err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
