@@ -59,7 +59,8 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 						Inputs: []string{"0:0"},
 						Name:   "scale",
 						Options: map[string]string{
-							"width": fmt.Sprintf("%d:%d", width, -1),
+							"width":  fmt.Sprintf("%d", width),
+							"height": "-1",
 						},
 						Outputs: []string{"out"},
 					},
@@ -177,42 +178,50 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 	for _, s := range pr.Streams {
 		o := fmt.Sprintf("out%d", len(outs))
 		if s.CodecType == "audio" {
-			fg = append(fg, goffmpeg.FilterChain{
-				{
-					Name:   "aselect",
-					Inputs: []string{fmt.Sprintf("0:%d", s.Index)},
-					Options: map[string]string{
-						"expr": aSelectExpr,
+			for channel := uint(0); channel < s.Channels; channel++ {
+				fg = append(fg, goffmpeg.FilterChain{
+					{
+						Name:   "aselect",
+						Inputs: []string{fmt.Sprintf("0:%d", s.Index)},
+						Options: map[string]string{
+							"expr": aSelectExpr,
+						},
 					},
-				},
-				{
-					Name: "showwavespic",
-					Options: map[string]string{
-						"size":           fmt.Sprintf("%dx%d", charAlignedWidth, audioChannelHeight*int(s.Channels)),
-						"split_channels": "1",
-						"colors":         "white",
+					{
+						Name: "pan",
+						Options: map[string]string{
+							"args": fmt.Sprintf("mono|c0=c%d", channel),
+						},
 					},
-				},
-				// colorspace filter wants even size
-				{
-					Name: "pad",
-					Options: map[string]string{
-						"width":  "iw+mod(iw,2)",
-						"height": "ih+mod(ih,2)",
+					{
+						Name: "showwavespic",
+						Options: map[string]string{
+							"size":           fmt.Sprintf("%dx%d", charAlignedWidth, audioChannelHeight),
+							"split_channels": "1",
+							"colors":         "white",
+						},
 					},
-				},
-				// make sure all outputs has same colorspace as vstack seems to pick the first
-				{
-					Name: "colorspace",
-					Options: map[string]string{
-						"iall": "bt709",
-						"all":  "bt709",
-						"trc":  "srgb",
+					// colorspace filter wants even size
+					{
+						Name: "pad",
+						Options: map[string]string{
+							"width":  "iw+mod(iw,2)",
+							"height": "ih+mod(ih,2)",
+						},
 					},
-					Outputs: []string{o},
-				},
-			})
-			outs = append(outs, o)
+					// make sure all outputs has same colorspace as vstack seems to pick the first
+					{
+						Name: "colorspace",
+						Options: map[string]string{
+							"iall": "bt709",
+							"all":  "bt709",
+							"trc":  "srgb",
+						},
+						Outputs: []string{o},
+					},
+				})
+				outs = append(outs, o)
+			}
 		} else if s.CodecType == "video" {
 			if isImageCodec(s.CodecName) {
 				width := int(s.DisplayWidth())
@@ -226,7 +235,8 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 					{
 						Name: "scale",
 						Options: map[string]string{
-							"width": fmt.Sprintf("%d:%d", width, height),
+							"width":  fmt.Sprintf("%d", width),
+							"height": fmt.Sprintf("%d", height),
 						},
 					},
 					{
@@ -259,7 +269,8 @@ func (Render) Output(path string, rRes render.Resolution, rRange render.Range) (
 					{
 						Name: "scale",
 						Options: map[string]string{
-							"width": fmt.Sprintf("%d:%d", tileWidth, tileHeight),
+							"width":  fmt.Sprintf("%d", tileWidth),
+							"height": fmt.Sprintf("%d", tileHeight),
 						},
 					},
 					{
