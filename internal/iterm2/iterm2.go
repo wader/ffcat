@@ -23,9 +23,11 @@ func Image(w io.Writer, m image.Image) error {
 	if _, err := w.Write([]byte("\x1b]1337;File=inline=1:")); err != nil {
 		return err
 	}
-	if err := png.Encode(base64.NewEncoder(base64.StdEncoding, w), m); err != nil {
+	b64w := base64.NewEncoder(base64.StdEncoding, w)
+	if err := png.Encode(b64w, m); err != nil {
 		return err
 	}
+	b64w.Close()
 	if _, err := w.Write([]byte("\x07")); err != nil {
 		return err
 	}
